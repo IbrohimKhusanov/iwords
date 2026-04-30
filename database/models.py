@@ -1,5 +1,5 @@
 """
-Модели базы данных — таблица слов пользователя.
+Модели базы данных — таблица пользователей и слов.
 """
 
 import json
@@ -12,6 +12,30 @@ from sqlalchemy.orm import Mapped, mapped_column
 from database.engine import Base
 
 
+class User(Base):
+    """
+    Модель пользователя.
+
+    Поля:
+        id — уникальный ID
+        user_id — Telegram user_id (уникальный)
+        locale — язык интерфейса ('ru' или 'uz')
+        created_at — дата регистрации
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True, index=True)
+    locale: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, user_id={self.user_id}, locale='{self.locale}')>"
+
+
 class Word(Base):
     """
     Модель слова в словаре пользователя.
@@ -20,8 +44,9 @@ class Word(Base):
         id — уникальный ID
         user_id — Telegram user_id
         word — английское слово
-        translation — перевод на русский
+        translation — перевод на целевой язык
         example — пример предложения
+        target_lang — язык перевода ('ru' или 'uz')
         status — статус: 'new', 'learning', 'learned'
         correct_count — общее количество правильных ответов
         correct_dates — JSON-список дат правильных ответов (для интервального повторения)
@@ -35,6 +60,7 @@ class Word(Base):
     word: Mapped[str] = mapped_column(String(255), nullable=False)
     translation: Mapped[str] = mapped_column(String(255), nullable=False)
     example: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    target_lang: Mapped[str] = mapped_column(String(5), default="ru", nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="new")
     correct_count: Mapped[int] = mapped_column(Integer, default=0)
     correct_dates: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")

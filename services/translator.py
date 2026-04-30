@@ -1,6 +1,7 @@
 """
 Сервис перевода — обёртка над deep-translator.
 Переводит слова и генерирует контекстные примеры.
+Поддерживает перевод на русский и узбекский языки.
 """
 
 import random
@@ -45,35 +46,37 @@ ADJ_TEMPLATES = [
 ]
 
 
-def translate_word(word: str) -> dict:
+def translate_word(word: str, target_lang: str = "ru") -> dict:
     """
-    Переводит английское слово на русский и генерирует пример.
+    Переводит английское слово на целевой язык и генерирует пример.
 
     Args:
         word: Английское слово для перевода.
+        target_lang: Язык перевода ('ru' или 'uz').
 
     Returns:
-        dict с ключами: 'word', 'translation', 'example'
+        dict с ключами: 'word', 'translation', 'example', 'target_lang'
     """
     try:
         # Переводим слово через Google Translate
-        translator = GoogleTranslator(source='en', target='ru')
+        translator = GoogleTranslator(source='en', target=target_lang)
         translation = translator.translate(word.strip().lower())
 
         # Если перевод не получен — fallback
         if not translation:
-            translation = "⚠️ Перевод не найден"
+            translation = "⚠️ Перевод не найден" if target_lang == "ru" else "⚠️ Tarjima topilmadi"
 
     except Exception as e:
-        translation = f"⚠️ Ошибка перевода: {str(e)[:50]}"
+        translation = f"⚠️ Ошибка: {str(e)[:50]}"
 
-    # Генерируем пример предложения
+    # Генерируем пример предложения (всегда на английском)
     example = _generate_example(word.strip().lower())
 
     return {
         "word": word.strip().lower(),
         "translation": translation,
-        "example": example
+        "example": example,
+        "target_lang": target_lang,
     }
 
 

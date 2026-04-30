@@ -15,8 +15,12 @@ from sqlalchemy import select, func
 from database.models import Word
 from states.add_word import TrainingState
 from keyboards.main import main_menu_kb, training_kb, after_answer_kb
+from i18n import t, get_flag
 
 router = Router()
+
+# Все варианты текста кнопки
+_BTN_TRAINING = ["🎯 Тренировка", "🎯 Mashq qilish"]
 
 
 async def _get_training_word(session: AsyncSession, user_id: int) -> Word | None:
@@ -49,7 +53,7 @@ async def _get_training_word(session: AsyncSession, user_id: int) -> Word | None
     return result.scalar_one_or_none()
 
 
-def _format_question(word: Word) -> str:
+def _format_question(word: Word, locale: str) -> str:
     """
     Формирует вопрос для тренировки.
     Случайно выбирает один из двух режимов:
@@ -57,32 +61,24 @@ def _format_question(word: Word) -> str:
     2. Показать пример с пропуском → угадать слово
     """
     mode = random.choice(["translation", "example"])
+    flag = get_flag(locale)
 
     if mode == "translation" or not word.example:
         # Режим: перевод → слово
         status_emoji = {"new": "🆕", "learning": "📖", "learned": "✅"}.get(word.status, "")
-        return (
-            f"🎯 <b>Тренировка</b> {status_emoji}\n\n"
-            f"🇷🇺 Перевод: <b>{word.translation}</b>\n\n"
-            f"❓ Напиши английское слово:"
-        )
+        return t(locale, "training_q_translation",
+                 status_emoji=status_emoji, flag=flag,
+                 translation=word.translation)
     else:
         # Режим: пример с пропуском → слово
-        # Заменяем слово в примере на пропуск
-        example_with_gap = word.example.replace(
-            word.word, "<b>___</b>"
-        )
-        return (
-            f"🎯 <b>Тренировка</b>\n\n"
-            f"📝 Заполни пропуск:\n"
-            f"<i>{example_with_gap}</i>\n\n"
-            f"🇷🇺 Подсказка: {word.translation}\n\n"
-            f"❓ Напиши слово:"
-        )
+        example_with_gap = word.example.replace(word.word, "<b>___</b>")
+        return t(locale, "training_q_example",
+                 example=example_with_gap, flag=flag,
+                 translation=word.translation)
 
 
-@router.message(F.text == "🎯 Тренировка")
-async def start_training(message: Message, state: FSMContext, session: AsyncSession):
+@router.message(F.text.in_(_BTN_TRAINING))
+async def start_training(message: Message, state: FSMContext, session: AsyncSession, locale: str):
     """Начало тренировки — выбираем случайное слово."""
     user_id = message.from_user.id
 
@@ -90,9 +86,7 @@ async def start_training(message: Message, state: FSMContext, session: AsyncSess
 
     if not word:
         await message.answer(
-            "🎯 <b>Тренировка</b>\n\n"
-            "У тебя пока нет слов для тренировки.\n"
-            "Сначала добавь несколько слов через <b>📝 Добавить слово</b>! 🚀",
+            t(locale, "training_empty"),
             parse_mode="HTML"
         )
         return
@@ -101,12 +95,12 @@ async def start_training(message: Message, state: FSMContext, session: AsyncSess
     await state.set_state(TrainingState.in_training)
     await state.update_data(current_word_id=word.id, score=0, total=0)
 
-    question = _format_question(word)
-    await message.answer(question, reply_markup=training_kb(), parse_mode="HTML")
+    question = _format_question(word, locale)
+    await message.answer(question, reply_markup=training_kb(locale), parse_mode="HTML")
 
 
 @router.message(TrainingState.in_training)
-async def check_answer(message: Message, state: FSMContext, session: AsyncSession):
+async def check_answer(message: Message, state: FSMContext, session: AsyncSession, locale: str):
     """
     Проверка ответа пользователя.
     Сравнивает введённое слово с правильным (case-insensitive).
@@ -115,16 +109,23 @@ async def check_answer(message: Message, state: FSMContext, session: AsyncSessio
     word_id = data.get("current_word_id")
     score = data.get("score", 0)
     total = data.get("total", 0)
+    flag = get_flag(locale)
 
     if not word_id:
-        await message.answer("⚠️ Ошибка тренировки. Начни заново.", reply_markup=main_menu_kb())
+        await message.answer(
+            t(locale, "training_error"),
+            reply_markup=main_menu_kb(locale)
+        )
         await state.clear()
         return
 
     # Получаем слово из БД
     word = await session.get(Word, word_id)
     if not word:
-        await message.answer("⚠️ Слово не найдено. Начни тренировку заново.", reply_markup=main_menu_kb())
+        await message.answer(
+            t(locale, "training_word_missing"),
+            reply_markup=main_menu_kb(locale)
+        )
         await state.clear()
         return
 
@@ -142,31 +143,30 @@ async def check_answer(message: Message, state: FSMContext, session: AsyncSessio
 
         status_text = ""
         if word.status == "learned":
-            status_text = "\n\n🏆 Слово помечено как <b>выученное</b>!"
+            status_text = t(locale, "training_learned")
         elif word.status == "learning":
             dates_left = 3 - len(word.get_correct_dates())
-            status_text = f"\n\n📈 Осталось {dates_left} дн. до статуса «выучено»"
+            status_text = t(locale, "training_days_left", days=dates_left)
 
         await message.answer(
-            f"✅ <b>Правильно!</b> 🎉\n\n"
-            f"🇬🇧 <b>{word.word}</b> — 🇷🇺 {word.translation}\n"
-            f"📝 <i>{word.example}</i>\n\n"
-            f"📊 Счёт: <b>{score}/{total}</b>"
-            f"{status_text}",
-            reply_markup=after_answer_kb(),
+            t(locale, "training_correct",
+              word=word.word, flag=flag,
+              translation=word.translation,
+              example=word.example,
+              score=score, total=total,
+              status_text=status_text),
+            reply_markup=after_answer_kb(locale),
             parse_mode="HTML"
         )
     else:
         # Неправильный ответ
         await message.answer(
-            f"❌ <b>Неверно!</b>\n\n"
-            f"Твой ответ: <s>{user_answer}</s>\n"
-            f"Правильно: 🇬🇧 <b>{word.word}</b>\n"
-            f"🇷🇺 {word.translation}\n"
-            f"📝 <i>{word.example}</i>\n\n"
-            f"📊 Счёт: <b>{score}/{total}</b>\n\n"
-            f"💡 Запомни и попробуй в следующий раз!",
-            reply_markup=after_answer_kb(),
+            t(locale, "training_incorrect",
+              answer=user_answer, word=word.word,
+              flag=flag, translation=word.translation,
+              example=word.example,
+              score=score, total=total),
+            reply_markup=after_answer_kb(locale),
             parse_mode="HTML"
         )
 
@@ -175,7 +175,7 @@ async def check_answer(message: Message, state: FSMContext, session: AsyncSessio
 
 
 @router.callback_query(F.data == "next_word")
-async def next_word(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+async def next_word(callback: CallbackQuery, state: FSMContext, session: AsyncSession, locale: str):
     """Следующее слово в тренировке."""
     user_id = callback.from_user.id
 
@@ -186,10 +186,8 @@ async def next_word(callback: CallbackQuery, state: FSMContext, session: AsyncSe
         score = data.get("score", 0)
         total = data.get("total", 0)
         await callback.message.answer(
-            f"🏁 <b>Тренировка завершена!</b>\n\n"
-            f"📊 Результат: <b>{score}/{total}</b>\n"
-            f"Больше нет слов для тренировки. Добавь новые! 🚀",
-            reply_markup=main_menu_kb(),
+            t(locale, "training_no_more", score=score, total=total),
+            reply_markup=main_menu_kb(locale),
             parse_mode="HTML"
         )
         await state.clear()
@@ -199,24 +197,24 @@ async def next_word(callback: CallbackQuery, state: FSMContext, session: AsyncSe
     # Обновляем текущее слово
     await state.update_data(current_word_id=word.id)
 
-    question = _format_question(word)
-    await callback.message.answer(question, reply_markup=training_kb(), parse_mode="HTML")
+    question = _format_question(word, locale)
+    await callback.message.answer(question, reply_markup=training_kb(locale), parse_mode="HTML")
     await callback.answer()
 
 
 @router.callback_query(F.data == "hint")
-async def show_hint(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+async def show_hint(callback: CallbackQuery, state: FSMContext, session: AsyncSession, locale: str):
     """Показать подсказку — первую и последнюю букву слова."""
     data = await state.get_data()
     word_id = data.get("current_word_id")
 
     if not word_id:
-        await callback.answer("⚠️ Нет текущего слова")
+        await callback.answer(t(locale, "hint_no_word"))
         return
 
     word = await session.get(Word, word_id)
     if not word:
-        await callback.answer("⚠️ Слово не найдено")
+        await callback.answer(t(locale, "hint_not_found"))
         return
 
     # Подсказка: первая буква + длина + последняя буква
@@ -226,11 +224,14 @@ async def show_hint(callback: CallbackQuery, state: FSMContext, session: AsyncSe
     else:
         hint = f"{w[0]}{'_' * (len(w) - 2)}{w[-1]}"
 
-    await callback.answer(f"💡 Подсказка: {hint} ({len(w)} букв)", show_alert=True)
+    await callback.answer(
+        t(locale, "hint_text", hint=hint, length=len(w)),
+        show_alert=True
+    )
 
 
 @router.callback_query(F.data == "finish_training")
-async def finish_training(callback: CallbackQuery, state: FSMContext):
+async def finish_training(callback: CallbackQuery, state: FSMContext, locale: str):
     """Завершение тренировки — показываем итоги."""
     data = await state.get_data()
     score = data.get("score", 0)
@@ -238,19 +239,17 @@ async def finish_training(callback: CallbackQuery, state: FSMContext):
 
     # Определяем комментарий к результату
     if total == 0:
-        comment = "Попробуй в следующий раз! 💪"
+        comment = t(locale, "result_no_answers")
     elif score / total >= 0.8:
-        comment = "🔥 Великолепно! Ты настоящий мастер!"
+        comment = t(locale, "result_excellent")
     elif score / total >= 0.5:
-        comment = "👍 Хороший результат! Продолжай тренироваться!"
+        comment = t(locale, "result_good")
     else:
-        comment = "💪 Не сдавайся! Повторение — мать учения!"
+        comment = t(locale, "result_try_again")
 
     await callback.message.answer(
-        f"🏁 <b>Тренировка завершена!</b>\n\n"
-        f"📊 Результат: <b>{score}/{total}</b>\n\n"
-        f"{comment}",
-        reply_markup=main_menu_kb(),
+        t(locale, "training_finished", score=score, total=total, comment=comment),
+        reply_markup=main_menu_kb(locale),
         parse_mode="HTML"
     )
     await state.clear()

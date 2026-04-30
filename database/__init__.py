@@ -3,4 +3,4 @@
 """
 
 from database.engine import async_session_maker, init_db
-from database.models import Word
+from database.models import User, Word
