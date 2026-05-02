@@ -2,6 +2,11 @@
 Entry point — Telegram bot startup.
 Initialize DB, register middleware and routers.
 """
+# --- НОВЫЙ БЛОК ДЛЯ RENDER ---
+import os
+from aiohttp import web
+import asyncio
+# -----------------------------
 
 import asyncio
 import logging
@@ -24,6 +29,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+# --- НОВЫЙ БЛОК ДЛЯ RENDER ---
+async def handle(request):
+    """Простой ответ для проверки порта."""
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    """Запуск веб-сервера, чтобы Render не выключал бота."""
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    # Берем порт, который дает Render, или 10000 по умолчанию
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    logger.info(f"🌐 Web server started on port {port}")
+# -----------------------------
 
 async def main():
     """Main function — initialize and start the bot."""
