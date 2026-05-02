@@ -1,58 +1,62 @@
 """
-Обработчик кнопки «Новые слова» / «Yangi so'zlar».
-Показывает последние добавленные слова, которые ещё не тренировались.
+Handler: Learn New Words — /learn command + button.
+Shows 5 last words with status 'new': Word — Translation — Example.
 """
 
 from aiogram import Router, F
 from aiogram.types import Message
+from aiogram.filters import Command
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from database.models import Word
-from i18n import t, get_flag
+from database.models import User, Word
+from i18n import t, get_flag, BTN_LEARN_NEW
 
 router = Router()
 
-# Все варианты текста кнопки
-_BTN_NEW_WORDS = ["🆕 Новые слова", "🆕 Yangi so'zlar"]
 
-
-@router.message(F.text.in_(_BTN_NEW_WORDS))
-async def show_new_words(message: Message, session: AsyncSession, locale: str):
+@router.message(Command("learn"))
+@router.message(F.text.in_(BTN_LEARN_NEW))
+async def show_learn_new(message: Message, session: AsyncSession, locale: str):
     """
-    Показывает 10 последних добавленных слов со статусом 'new'.
-    Красиво форматирует список с нумерацией.
+    Shows 5 last added words with status 'new'.
+    Format: Word — Translation — Example.
     """
     user_id = message.from_user.id
-    flag = get_flag(locale)
 
-    # Выбираем последние 10 новых слов
+    # Get user's target lang for flag
+    db_user = await session.scalar(
+        select(User).where(User.user_id == user_id)
+    )
+    flag = get_flag(db_user.target_lang if db_user else "ru")
+
+    # Select last 5 new words (interval = 0)
     result = await session.execute(
         select(Word)
-        .where(Word.user_id == user_id, Word.status == "new")
+        .where(Word.user_id == user_id, Word.interval == 0)
         .order_by(Word.created_at.desc())
-        .limit(10)
+        .limit(5)
     )
     words = result.scalars().all()
 
     if not words:
         await message.answer(
-            t(locale, "new_words_empty"),
+            t(locale, "learn_empty"),
             parse_mode="HTML"
         )
         return
 
-    # Формируем красивый список
+    # Build word list
     words_list = ""
     for i, w in enumerate(words, 1):
         words_list += (
-            f"<b>{i}.</b> 🇬🇧 <b>{w.word}</b> — {flag} {w.translation}\n"
+            f"<b>{i}.</b> 🇬🇧 <b>{w.english_word}</b> — {flag} {w.translation}\n"
             f"    📝 <i>{w.example}</i>\n\n"
         )
 
     await message.answer(
-        t(locale, "new_words_header", count=len(words))
+        t(locale, "learn_header", count=len(words))
         + words_list
-        + t(locale, "new_words_footer"),
+        + t(locale, "learn_footer"),
         parse_mode="HTML"
     )

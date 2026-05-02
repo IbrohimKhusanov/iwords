@@ -1,6 +1,6 @@
 """
-Middleware для инъекции сессии БД и локали пользователя в обработчики.
-Каждый запрос получает свою сессию и locale, которые автоматически закрываются.
+Middleware for DB session injection and user locale resolution.
+Each request gets its own session, locale, and user_db.
 """
 
 from typing import Callable, Dict, Any, Awaitable
@@ -15,8 +15,8 @@ from database.models import User
 
 class DbSessionMiddleware(BaseMiddleware):
     """
-    Middleware, который создаёт AsyncSession для каждого обновления
-    и передаёт session, locale и user_db в data для использования в хендлерах.
+    Middleware that creates AsyncSession for each update
+    and passes session, locale, and user_db into handler data.
     """
 
     async def __call__(
@@ -28,14 +28,13 @@ class DbSessionMiddleware(BaseMiddleware):
         async with async_session_maker() as session:
             data["session"] = session
 
-            # Определяем user_id из события
+            # Resolve user_id from event
             user = data.get("event_from_user")
             if user:
-                # Ищем пользователя в БД
                 db_user = await session.scalar(
                     select(User).where(User.user_id == user.id)
                 )
-                data["locale"] = db_user.locale if db_user else "en"
+                data["locale"] = db_user.interface_lang if db_user else "en"
                 data["user_db"] = db_user
             else:
                 data["locale"] = "en"

@@ -1,15 +1,13 @@
 """
-Сервис перевода — обёртка над deep-translator.
-Переводит слова и генерирует контекстные примеры.
-Поддерживает перевод на русский и узбекский языки.
+Сервис перевода — deep-translator (Google).
+Переводит слова и генерирует контекстные примеры на английском.
 """
 
 import random
+
 from deep_translator import GoogleTranslator
 
 
-# Шаблоны для генерации примеров предложений
-# {word} будет заменено на английское слово
 EXAMPLE_TEMPLATES = [
     "I always try to {word} when I have free time.",
     "She asked me to {word}, and I agreed immediately.",
@@ -21,7 +19,6 @@ EXAMPLE_TEMPLATES = [
     "The teacher encouraged us to {word} every day.",
 ]
 
-# Шаблоны для существительных
 NOUN_TEMPLATES = [
     "The {word} was more beautiful than I expected.",
     "I bought a new {word} at the store yesterday.",
@@ -33,7 +30,6 @@ NOUN_TEMPLATES = [
     "I can't imagine my life without this {word}.",
 ]
 
-# Шаблоны для прилагательных
 ADJ_TEMPLATES = [
     "The weather today is incredibly {word}.",
     "She has a very {word} personality.",
@@ -45,35 +41,33 @@ ADJ_TEMPLATES = [
     "I find this book particularly {word} and insightful.",
 ]
 
+_TARGET_MAP = {"ru": "ru", "uz": "uz"}
+
 
 def translate_word(word: str, target_lang: str = "ru") -> dict:
     """
     Переводит английское слово на целевой язык и генерирует пример.
 
-    Args:
-        word: Английское слово для перевода.
-        target_lang: Язык перевода ('ru' или 'uz').
-
     Returns:
-        dict с ключами: 'word', 'translation', 'example', 'target_lang'
+        dict: word, translation, example, target_lang
     """
+    w = word.strip().lower()
+    dest = _TARGET_MAP.get(target_lang, "ru")
     try:
-        # Переводим слово через Google Translate
-        translator = GoogleTranslator(source='en', target=target_lang)
-        translation = translator.translate(word.strip().lower())
-
-        # Если перевод не получен — fallback
-        if not translation:
-            translation = "⚠️ Перевод не найден" if target_lang == "ru" else "⚠️ Tarjima topilmadi"
-
+        translator = GoogleTranslator(source="en", target=dest)
+        translation = translator.translate(w) or ""
+        if not translation.strip():
+            raise ValueError("empty translation")
     except Exception as e:
-        translation = f"⚠️ Ошибка: {str(e)[:50]}"
+        err = str(e)[:80]
+        translation = (
+            f"⚠️ Ошибка: {err}" if target_lang == "ru" else f"⚠️ Xato: {err}"
+        )
 
-    # Генерируем пример предложения (всегда на английском)
-    example = _generate_example(word.strip().lower())
+    example = _generate_example(w)
 
     return {
-        "word": word.strip().lower(),
+        "word": w,
         "translation": translation,
         "example": example,
         "target_lang": target_lang,
@@ -81,12 +75,6 @@ def translate_word(word: str, target_lang: str = "ru") -> dict:
 
 
 def _generate_example(word: str) -> str:
-    """
-    Генерирует контекстный пример предложения со словом.
-    Выбирает случайный шаблон и подставляет слово.
-    """
-    # Выбираем случайный набор шаблонов
     all_templates = EXAMPLE_TEMPLATES + NOUN_TEMPLATES + ADJ_TEMPLATES
     template = random.choice(all_templates)
-
     return template.format(word=word)

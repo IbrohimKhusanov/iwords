@@ -1,15 +1,15 @@
 """
-FSM состояния для добавления слова.
+FSM states for add word and training.
 """
 
 from aiogram.fsm.state import State, StatesGroup
 
 
 class AddWordState(StatesGroup):
-    """Состояния при добавлении нового слова."""
-    waiting_for_word = State()  # Ожидание ввода английского слова
+    waiting_for_word = State()
 
 
 class TrainingState(StatesGroup):
-    """Состояния во время тренировки."""
-    in_training = State()  # Пользователь проходит тренировку
+    picking_mode = State()
+    translation_answer = State()
+    sentence_answer = State()
