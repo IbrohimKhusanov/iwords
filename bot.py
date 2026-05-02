@@ -26,22 +26,24 @@ logger = logging.getLogger(__name__)
 
 
 # ==========================================
-# ТЕХНИЧЕСКИЙ БЛОК ДЛЯ RENDER (PORT BINDING)
+# ЧАСТЬ ДЛЯ RENDER (ЧТОБЫ НЕ БЫЛО ОШИБОК ПОРТА)
 # ==========================================
+async def handle(request):
+    return web.Response(text="Bot is Live")
+
 async def start_render_server():
-    """Специальный веб-сервер, чтобы Render не отключал бота"""
     app = web.Application()
-    app.router.add_get("/", lambda r: web.Response(text="Bot is Live"))
+    app.router.add_get("/", handle)
     runner = web.AppRunner(app)
     await runner.setup()
-    # Привязываемся к порту, который требует Render
+    # Берем порт 10000 (стандарт для Render)
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    logger.info(f"🌐 [Render] Port {port} bound successfully!")
+    logger.info(f"🌐 [Render] Web server started on port {port}")
 
 # ==========================================
-# ОСНОВНАЯ ЛОГИКА ЗАПУСКА БОТА
+# ОСНОВНОЙ ЗАПУСК БОТА
 # ==========================================
 
 
