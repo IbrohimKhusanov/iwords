@@ -43,14 +43,26 @@ async def cmd_start(message: Message, session: AsyncSession, locale: str):
 
     if db_user:
         loc = resolve_ui_locale(db_user.target_lang)
+        src = db_user.source_lang
+        tgt = db_user.target_lang
     else:
         db_user = User(user_id=user_id, interface_lang="en", source_lang="en", target_lang="ru")
         session.add(db_user)
         await session.commit()
         loc = "en"
+        src = "en"
+        tgt = "ru"
 
     await message.answer(
-        t(loc, "welcome", name=message.from_user.first_name),
+        t(
+            loc,
+            "welcome",
+            name=message.from_user.first_name,
+            source_flag=get_flag(src),
+            source_name=get_language_name(src),
+            target_flag=get_flag(tgt),
+            target_name=get_language_name(tgt),
+        ),
         reply_markup=main_menu_kb(loc),
         parse_mode="HTML",
     )

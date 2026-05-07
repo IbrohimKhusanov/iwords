@@ -6,12 +6,25 @@ Generates one natural sentence in source language + translation in native langua
 import asyncio
 import logging
 import re
-
-import google.generativeai as genai
+import sys
 
 from config import GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
+
+# ── Startup diagnostic ────────────────────────────────────────────
+if GEMINI_API_KEY:
+    print(f"[ai_generator] ✅ GEMINI_API_KEY loaded ({len(GEMINI_API_KEY)} chars)", file=sys.stderr)
+else:
+    print("[ai_generator] ⚠️  GEMINI_API_KEY is EMPTY — AI examples will be disabled", file=sys.stderr)
+
+# ── Try to import google.generativeai ─────────────────────────────
+try:
+    import google.generativeai as genai
+    print(f"[ai_generator] ✅ google.generativeai imported OK (version={getattr(genai, '__version__', 'unknown')})", file=sys.stderr)
+except ImportError as _e:
+    genai = None
+    print(f"[ai_generator] ❌ google.generativeai import FAILED: {_e}", file=sys.stderr)
 
 _MODEL_NAME = "gemini-2.0-flash"
 
@@ -58,7 +71,6 @@ def _parse_response(text: str, word: str) -> tuple[str, str] | None:
     Parse Gemini response into (source_sentence, translated_sentence).
 
     Accepts any two non-empty lines. Cleans markdown artifacts and label prefixes.
-    Validates that the first line actually contains the word (case-insensitive).
     """
     if not text:
         return None
@@ -73,13 +85,8 @@ def _parse_response(text: str, word: str) -> tuple[str, str] | None:
 
     # Basic sanity: source line should contain the word (case-insensitive)
     if word.lower() not in source_line.lower():
-        # Maybe lines are swapped or the model used a different form;
-        # check the second line too
         if word.lower() in target_line.lower():
             source_line, target_line = target_line, source_line
-        else:
-            # Accept anyway — the model may have conjugated/declined the word
-            pass
 
     # Reject if either line is just the bare word
     if source_line.lower().strip() == word.lower().strip():
@@ -113,10 +120,15 @@ async def generate_example(
     src_name = _LANG_NAMES.get(source_lang, source_lang)
     tgt_name = _LANG_NAMES.get(target_lang, target_lang)
 
+    # ── Guard: missing library ──
+    if genai is None:
+        print(f"[ai_generator] ❌ google.generativeai not installed — cannot generate for '{w}'", file=sys.stderr)
+        return {"example_source": _get_fallback(locale), "example_translation": ""}
+
+    # ── Guard: missing API key ──
     if not GEMINI_API_KEY:
-        logger.warning("GEMINI_API_KEY is not set, skipping AI example generation")
-        fallback = _get_fallback(locale)
-        return {"example_source": fallback, "example_translation": ""}
+        print(f"[ai_generator] ⚠️  No API key — skipping generation for '{w}'", file=sys.stderr)
+        return {"example_source": _get_fallback(locale), "example_translation": ""}
 
     prompt = (
         f"Write one short, very simple everyday example sentence in {src_name} "
@@ -130,23 +142,28 @@ async def generate_example(
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel(_MODEL_NAME)
+        print(f"[ai_generator] 🔄 Calling Gemini for '{w}' ({src_name}→{tgt_name})...", file=sys.stderr)
+
         response = await asyncio.to_thread(model.generate_content, prompt)
         raw_text = getattr(response, "text", "") or ""
-        logger.debug("Gemini raw response for '%s': %s", w, repr(raw_text))
+        print(f"[ai_generator] 📥 Raw response for '{w}': {repr(raw_text[:200])}", file=sys.stderr)
 
         parsed = _parse_response(raw_text, w)
         if parsed:
             source_sentence, translated_sentence = parsed
+            print(f"[ai_generator] ✅ Parsed OK: {source_sentence!r} / {translated_sentence!r}", file=sys.stderr)
             return {
                 "example_source": source_sentence,
                 "example_translation": translated_sentence,
             }
         else:
-            logger.warning(
-                "Gemini response could not be parsed for '%s': %s", w, repr(raw_text)
-            )
+            print(f"[ai_generator] ⚠️  Could not parse response for '{w}': {repr(raw_text[:300])}", file=sys.stderr)
+
     except Exception as exc:
-        logger.warning("Gemini example generation failed for '%s': %s", w, exc)
+        # ── CRITICAL: Print full error to terminal for debugging ──
+        print(f"[ai_generator] ❌ EXCEPTION for '{w}': {type(exc).__name__}: {exc}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
 
     # Clean fallback — never echo the bare word
     fallback = _get_fallback(locale)

@@ -10,12 +10,13 @@ MESSAGES = {
         "lang_changed": "✅ Language changed to <b>English</b>.",
         "welcome": (
             "👋 Hi, <b>{name}</b>!\n\n"
-            "🇬🇧 I'm a bot for learning English words.\n\n"
+            "📚 I'm a bot for learning vocabulary.\n"
+            "{source_flag} <b>{source_name}</b> → {target_flag} <b>{target_name}</b>\n\n"
             "🎯 <b>Practice</b> — spaced repetition training\n"
             "📝 <b>Add words</b> — auto translation\n"
             "📊 <b>My progress</b> — stats\n"
             "🗂 <b>My vocabulary</b> — your list\n"
-            "⚙️ <b>Settings</b> — translation language (RU / UZ)\n\n"
+            "⚙️ <b>Settings</b> — change languages\n\n"
             "💡 <code>/learn</code> — browse recent new words\n\n"
             "🚀 Let's go!"
         ),
@@ -125,12 +126,13 @@ MESSAGES = {
         "lang_changed": "✅ Язык изменён на <b>Русский</b>.",
         "welcome": (
             "👋 Привет, <b>{name}</b>!\n\n"
-            "🇬🇧 Я — бот для изучения английских слов.\n\n"
+            "📚 Я — бот для изучения слов.\n"
+            "{source_flag} <b>{source_name}</b> → {target_flag} <b>{target_name}</b>\n\n"
             "➕ <b>Добавить слова</b> — автоматический перевод\n"
             "📖 <b>Учить новые</b> — недавно добавленные\n"
             "🧠 <b>Тренировка</b> — проверь знания\n"
             "🗂 <b>Мои слова</b> — твой словарь\n"
-            "⚙️ <b>Настройки</b> — смена языка\n\n"
+            "⚙️ <b>Настройки</b> — смена языков\n\n"
             "🚀 Давай начнём!"
         ),
         "help": (
@@ -233,12 +235,13 @@ MESSAGES = {
         "lang_changed": "✅ Til <b>O'zbekcha</b>ga o'zgartirildi.",
         "welcome": (
             "👋 Salom, <b>{name}</b>!\n\n"
-            "🇬🇧 Men ingliz so'zlarni o'rganish botiman.\n\n"
+            "📚 Men so'zlarni o'rganish botiman.\n"
+            "{source_flag} <b>{source_name}</b> → {target_flag} <b>{target_name}</b>\n\n"
             "➕ <b>So'z qo'shish</b> — avtomatik tarjima\n"
             "📖 <b>Yangilarni o'rganish</b> — yaqinda qo'shilgan\n"
             "🧠 <b>Mashq</b> — bilimingizni sinang\n"
             "🗂 <b>So'zlarim</b> — lug'atingiz\n"
-            "⚙️ <b>Sozlamalar</b> — tilni o'zgartirish\n\n"
+            "⚙️ <b>Sozlamalar</b> — tillarni o'zgartirish\n\n"
             "🚀 Boshlaylik!"
         ),
         "help": (
