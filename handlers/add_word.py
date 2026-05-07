@@ -138,10 +138,13 @@ async def _single(
 
     wait_msg = await message.answer(t(locale, "translating"))
     result = translate_word(word_in, source_lang=src, target_lang=tgt)
-    ai_example = await generate_example(result["word"], src, tgt)
+    ai_example = await generate_example(result["word"], src, tgt, locale=locale)
     source_example = ai_example["example_source"]
     translated_example = ai_example["example_translation"]
-    rendered_example = html.escape(f"{source_example}\n{translated_example}")
+    if translated_example:
+        rendered_example = html.escape(f"{source_example}\n{translated_example}")
+    else:
+        rendered_example = html.escape(source_example)
 
     session.add(
         Word(
@@ -198,7 +201,7 @@ async def _batch_background(bot: Bot, chat_id: int, user_id: int, words: list[st
                 continue
 
             r = translate_word(w, source_lang=src, target_lang=tgt)
-            ai_example = await generate_example(r["word"], src, tgt)
+            ai_example = await generate_example(r["word"], src, tgt, locale=locale)
             source_example = ai_example["example_source"]
             translated_example = ai_example["example_translation"]
             session.add(
