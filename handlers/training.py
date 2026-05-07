@@ -19,6 +19,7 @@ from keyboards.inline import train_mode_kb, training_controls_kb, after_answer_k
 from i18n import (
     t,
     get_flag,
+    get_language_name,
     BTN_TRAIN,
     BTN_ADD_WORDS,
     BTN_RESULTS,
@@ -131,6 +132,8 @@ async def _send_question(
         return
 
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
+    source_lang = db_user.source_lang if db_user else "en"
+    source_name = get_language_name(source_lang)
     flag = get_flag(db_user.target_lang if db_user else "ru")
 
     await state.update_data(current_word_id=word.id)
@@ -140,6 +143,7 @@ async def _send_question(
         q = t(
             locale,
             "training_translation_ask",
+            source_name=source_name,
             flag=flag,
             translation=word.translation,
         )
@@ -276,6 +280,7 @@ async def _grade_answer(
         return
 
     db_user = await session.scalar(select(User).where(User.user_id == message.from_user.id))
+    source_flag = get_flag(db_user.source_lang if db_user else "en")
     flag = get_flag(db_user.target_lang if db_user else "ru")
 
     ok = _norm(raw) == _norm(expected)
@@ -298,6 +303,7 @@ async def _grade_answer(
             t(
                 locale,
                 "training_correct",
+                source_flag=source_flag,
                 word=word.english_word,
                 flag=flag,
                 translation=word.translation,
@@ -316,6 +322,7 @@ async def _grade_answer(
             t(
                 locale,
                 "training_incorrect",
+                source_flag=source_flag,
                 word=word.english_word,
                 flag=flag,
                 translation=word.translation,

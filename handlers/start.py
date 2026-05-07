@@ -10,8 +10,15 @@ from sqlalchemy import select, func
 
 from database.models import User, Word
 from keyboards.main import main_menu_kb
-from keyboards.inline import settings_kb, target_lang_kb, words_page_kb
-from i18n import t, get_flag, BTN_SETTINGS, BTN_MY_WORDS, BTN_RESULTS, TARGET_LANG_DISPLAY
+from keyboards.inline import settings_kb, source_lang_kb, target_lang_kb, words_page_kb
+from i18n import (
+    t,
+    get_flag,
+    get_language_name,
+    BTN_SETTINGS,
+    BTN_MY_WORDS,
+    BTN_RESULTS,
+)
 
 router = Router()
 
@@ -36,7 +43,7 @@ async def cmd_start(message: Message, session: AsyncSession, locale: str):
     if db_user:
         loc = db_user.interface_lang
     else:
-        db_user = User(user_id=user_id, interface_lang="en", target_lang="ru")
+        db_user = User(user_id=user_id, interface_lang="en", source_lang="en", target_lang="ru")
         session.add(db_user)
         await session.commit()
         loc = "en"
@@ -57,10 +64,11 @@ async def cmd_help(message: Message, locale: str):
 async def cmd_settings(message: Message, session: AsyncSession, locale: str):
     user_id = message.from_user.id
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
-    target = TARGET_LANG_DISPLAY.get(db_user.target_lang, "Русский") if db_user else "Русский"
+    source = get_language_name(db_user.source_lang if db_user else "en")
+    native = get_language_name(db_user.target_lang if db_user else "ru")
 
     await message.answer(
-        t(locale, "settings_title", target=target),
+        t(locale, "settings_title", source=source, native=native),
         reply_markup=settings_kb(locale),
         parse_mode="HTML",
     )
@@ -70,20 +78,53 @@ async def cmd_settings(message: Message, session: AsyncSession, locale: str):
 async def show_settings(message: Message, session: AsyncSession, locale: str):
     user_id = message.from_user.id
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
-    target = TARGET_LANG_DISPLAY.get(db_user.target_lang, "Русский") if db_user else "Русский"
+    source = get_language_name(db_user.source_lang if db_user else "en")
+    native = get_language_name(db_user.target_lang if db_user else "ru")
 
     await message.answer(
-        t(locale, "settings_title", target=target),
+        t(locale, "settings_title", source=source, native=native),
         reply_markup=settings_kb(locale),
         parse_mode="HTML",
     )
 
 
+@router.callback_query(F.data == "change_source_lang")
+async def change_source_lang(callback: CallbackQuery, session: AsyncSession, locale: str):
+    db_user = await session.scalar(select(User).where(User.user_id == callback.from_user.id))
+    native_lang = db_user.target_lang if db_user else "ru"
+    await callback.message.edit_text(
+        t(locale, "choose_source_lang"),
+        reply_markup=source_lang_kb(exclude_lang=native_lang),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("set_source:"))
+async def set_source_lang(callback: CallbackQuery, session: AsyncSession, locale: str):
+    chosen_source = callback.data.split(":")[1]
+    user_id = callback.from_user.id
+    db_user = await session.scalar(select(User).where(User.user_id == user_id))
+    if db_user:
+        if chosen_source == db_user.target_lang:
+            await callback.answer(t(locale, "choose_source_lang"), show_alert=True)
+            return
+        db_user.source_lang = chosen_source
+        await session.commit()
+    await callback.message.edit_text(
+        t(locale, "source_lang_changed", lang=get_language_name(chosen_source)),
+        parse_mode="HTML",
+    )
+    await callback.answer()
+
+
 @router.callback_query(F.data == "change_target_lang")
-async def change_target_lang(callback: CallbackQuery, locale: str):
+async def change_target_lang(callback: CallbackQuery, session: AsyncSession, locale: str):
+    db_user = await session.scalar(select(User).where(User.user_id == callback.from_user.id))
+    source_lang = db_user.source_lang if db_user else "en"
     await callback.message.edit_text(
         t(locale, "choose_target_lang"),
-        reply_markup=target_lang_kb(),
+        reply_markup=target_lang_kb(exclude_lang=source_lang),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -96,12 +137,14 @@ async def set_target_lang(callback: CallbackQuery, session: AsyncSession, locale
 
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
     if db_user:
+        if chosen_target == db_user.source_lang:
+            await callback.answer(t(locale, "choose_target_lang"), show_alert=True)
+            return
         db_user.target_lang = chosen_target
         await session.commit()
 
-    lang_name = TARGET_LANG_DISPLAY.get(chosen_target, chosen_target)
     await callback.message.edit_text(
-        t(locale, "target_lang_changed", lang=lang_name),
+        t(locale, "target_lang_changed", lang=get_language_name(chosen_target)),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -147,6 +190,7 @@ async def show_my_stats(message: Message, session: AsyncSession, locale: str):
 
 def _format_words_page(
     words: list[Word],
+    source_flag: str,
     flag: str,
     page: int,
     total_pages: int,
@@ -156,7 +200,7 @@ def _format_words_page(
     for w in words:
         ex = w.example or "—"
         lines.append(
-            f"🇬🇧 <b>{w.english_word}</b> — {flag} {w.translation}\n"
+            f"{source_flag} <b>{w.english_word}</b> — {flag} {w.translation}\n"
             f"📝 <i>{ex}</i>\n"
         )
     return "\n".join(lines)
@@ -175,6 +219,7 @@ async def show_my_words(message: Message, session: AsyncSession, locale: str):
 
     total_pages = max(1, (total + WORDS_PER_PAGE - 1) // WORDS_PER_PAGE)
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
+    source_flag = get_flag(db_user.source_lang if db_user else "en")
     flag = get_flag(db_user.target_lang if db_user else "ru")
 
     result = await session.execute(
@@ -185,7 +230,7 @@ async def show_my_words(message: Message, session: AsyncSession, locale: str):
         .limit(WORDS_PER_PAGE)
     )
     words = list(result.scalars().all())
-    text = _format_words_page(words, flag, 0, total_pages, locale)
+    text = _format_words_page(words, source_flag, flag, 0, total_pages, locale)
     kb = words_page_kb(locale, 0, total_pages) if total_pages > 1 else None
     await message.answer(text, reply_markup=kb, parse_mode="HTML")
 
@@ -206,6 +251,7 @@ async def words_page_callback(callback: CallbackQuery, session: AsyncSession, lo
     page = max(0, min(page, total_pages - 1))
 
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
+    source_flag = get_flag(db_user.source_lang if db_user else "en")
     flag = get_flag(db_user.target_lang if db_user else "ru")
 
     result = await session.execute(
@@ -216,7 +262,7 @@ async def words_page_callback(callback: CallbackQuery, session: AsyncSession, lo
         .limit(WORDS_PER_PAGE)
     )
     words = list(result.scalars().all())
-    text = _format_words_page(words, flag, page, total_pages, locale)
+    text = _format_words_page(words, source_flag, flag, page, total_pages, locale)
     kb = words_page_kb(locale, page, total_pages) if total_pages > 1 else None
     await callback.message.edit_text(text, reply_markup=kb, parse_mode="HTML")
     await callback.answer()

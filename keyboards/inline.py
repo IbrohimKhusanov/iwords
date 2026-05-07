@@ -4,7 +4,7 @@ Inline keyboards — settings, training, vocabulary pagination.
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from i18n import t
+from i18n import t, LANGUAGE_META
 
 
 def language_kb() -> InlineKeyboardMarkup:
@@ -19,20 +19,37 @@ def language_kb() -> InlineKeyboardMarkup:
     )
 
 
-def target_lang_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_target:ru"),
-                InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="set_target:uz"),
-            ],
-        ]
-    )
+def _language_rows(prefix: str, exclude_lang: str | None = None) -> list[list[InlineKeyboardButton]]:
+    buttons: list[InlineKeyboardButton] = []
+    for code, meta in LANGUAGE_META.items():
+        if code == exclude_lang:
+            continue
+        buttons.append(
+            InlineKeyboardButton(
+                text=f"{meta['flag']} {meta['name']}",
+                callback_data=f"{prefix}:{code}",
+            )
+        )
+    return [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+
+
+def source_lang_kb(exclude_lang: str | None = None) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=_language_rows("set_source", exclude_lang))
+
+
+def target_lang_kb(exclude_lang: str | None = None) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=_language_rows("set_target", exclude_lang))
 
 
 def settings_kb(locale: str = "en") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=t(locale, "settings_change_source"),
+                    callback_data="change_source_lang",
+                ),
+            ],
             [
                 InlineKeyboardButton(
                     text=t(locale, "settings_change_target"),

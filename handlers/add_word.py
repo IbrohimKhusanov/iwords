@@ -94,9 +94,11 @@ async def process_word(message: Message, state: FSMContext, session: AsyncSessio
         )
 
 
-async def _get_target_lang(session: AsyncSession, user_id: int) -> str:
+async def _get_lang_pair(session: AsyncSession, user_id: int) -> tuple[str, str]:
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
-    return db_user.target_lang if db_user else "ru"
+    if not db_user:
+        return "en", "ru"
+    return db_user.source_lang, db_user.target_lang
 
 
 async def _single(
@@ -111,7 +113,8 @@ async def _single(
         return
 
     uid = message.from_user.id
-    tgt = await _get_target_lang(session, uid)
+    src, tgt = await _get_lang_pair(session, uid)
+    source_flag = get_flag(src)
     flag = get_flag(tgt)
 
     existing = await session.scalar(
@@ -132,7 +135,7 @@ async def _single(
         return
 
     wait_msg = await message.answer(t(locale, "translating"))
-    result = translate_word(word_in, target_lang=tgt)
+    result = translate_word(word_in, source_lang=src, target_lang=tgt)
 
     session.add(
         Word(
@@ -153,6 +156,7 @@ async def _single(
         t(
             locale,
             "word_added",
+            source_flag=source_flag,
             word=result["word"],
             flag=flag,
             translation=result["translation"],
@@ -165,7 +169,8 @@ async def _single(
 
 async def _batch_background(bot: Bot, chat_id: int, user_id: int, words: list[str], locale: str):
     async with async_session_maker() as session:
-        tgt = await _get_target_lang(session, user_id)
+        src, tgt = await _get_lang_pair(session, user_id)
+        source_flag = get_flag(src)
         flag = get_flag(tgt)
         total = len(words)
         prog_msg = await bot.send_message(chat_id, _progress(0, total, locale), parse_mode="HTML")
@@ -186,7 +191,7 @@ async def _batch_background(bot: Bot, chat_id: int, user_id: int, words: list[st
                 dup.append(w)
                 continue
 
-            r = translate_word(w, target_lang=tgt)
+            r = translate_word(w, source_lang=src, target_lang=tgt)
             session.add(
                 Word(
                     user_id=user_id,
@@ -219,7 +224,7 @@ async def _batch_background(bot: Bot, chat_id: int, user_id: int, words: list[st
         except Exception:
             pass
 
-        await _send_batch_reports(bot, chat_id, added, dup, bad, locale, flag)
+        await _send_batch_reports(bot, chat_id, added, dup, bad, locale, source_flag, flag)
 
 
 async def _send_batch_reports(
@@ -229,6 +234,7 @@ async def _send_batch_reports(
     dup: list[str],
     bad: list[str],
     locale: str,
+    source_flag: str,
     flag: str,
 ):
     header = (
@@ -268,7 +274,7 @@ async def _send_batch_reports(
         off = ci * _CHUNK_SIZE
         for j, r in enumerate(chunk, off + 1):
             parts.append(
-                f"  {j}. 🇬🇧 <b>{r['word']}</b> — {flag} {r['translation']}\n"
+                f"  {j}. {source_flag} <b>{r['word']}</b> — {flag} {r['translation']}\n"
                 f"      📝 <i>{r['example']}</i>"
             )
         is_last = ci == len(chunks) - 1

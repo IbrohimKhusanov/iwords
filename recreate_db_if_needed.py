@@ -63,6 +63,8 @@ async def recreate_and_migrate():
             # Ensure defaults for required fields
             if 'interface_lang' not in filtered_kwargs:
                 filtered_kwargs['interface_lang'] = 'en'
+            if 'source_lang' not in filtered_kwargs:
+                filtered_kwargs['source_lang'] = 'en'
             if 'target_lang' not in filtered_kwargs:
                 filtered_kwargs['target_lang'] = 'ru'
             # Convert created_at to datetime if it's a string

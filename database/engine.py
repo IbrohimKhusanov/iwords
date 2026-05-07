@@ -75,6 +75,13 @@ async def init_db():
                 ))
                 logger.info("✅ Migration: set target_lang from interface_lang")
 
+        # Add source_lang column to users if missing
+        if not await _column_exists(conn, "users", "source_lang"):
+            await conn.execute(text(
+                "ALTER TABLE users ADD COLUMN source_lang VARCHAR(10) DEFAULT 'en' NOT NULL"
+            ))
+            logger.info("✅ Migration: added source_lang to users")
+
         # --- Words table migrations ---
 
         # Add english_word column if missing (rename from 'word')

@@ -62,7 +62,7 @@ MESSAGES = {
         "too_many_words": "⚠️ Too many words! Max — <b>{max_words}</b>.\nYou sent <b>{count}</b>. Split the list.",
         "word_exists": "📌 <b>{word}</b> is already in your dictionary!\n\n{flag} Translation: <b>{translation}</b>\n📝 Example: <i>{example}</i>\n\nEnter another word or press ❌ Cancel.",
         "translating": "🔄 Translating…",
-        "word_added": "✅ <b>Word added!</b>\n\n🇬🇧 <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Keep adding or start training!",
+        "word_added": "✅ <b>Word added!</b>\n\n{source_flag} <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Keep adding or start training!",
         "cancel_action": "❌ Action cancelled. Back to menu.",
         "progress_bar": "⏳ <b>Processing words…</b>\n\n{bar}  <b>{pct}%</b>\nProcessed: <b>{done}/{total}</b> words",
         "batch_added": "✅ <b>Added {count} words!</b>\n\n",
@@ -87,9 +87,9 @@ MESSAGES = {
         "training_empty": "🎯 <b>Practice</b>\n\nNo words to train yet.\nAdd words first! 🚀",
         "training_pick_mode": "🎯 <b>Practice</b>\n\nChoose a mode:",
         "training_translation_ask": (
-            "🎯 <b>Translation → English</b>\n\n"
+            "🎯 <b>Translation → {source_name}</b>\n\n"
             "{flag} Translation: <b>{translation}</b>\n\n"
-            "✏️ Type the <b>English</b> word:"
+            "✏️ Type the <b>{source_name}</b> word:"
         ),
         "training_sentence_ask": (
             "🎯 <b>Complete the sentence</b>\n\n"
@@ -97,8 +97,8 @@ MESSAGES = {
             "✏️ Type the missing word:"
         ),
         "training_question": "🧠 <b>Training</b>\n\n📝 Fill in the blank:\n<i>{example}</i>\n\n{flag} Hint: {translation}\n\n❓ Choose the correct word:",
-        "training_correct": "✅ <b>Correct!</b> 🎉\n\n🇬🇧 <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 Score: <b>{score}/{total}</b>{status_text}",
-        "training_incorrect": "❌ <b>Wrong!</b>\n\nCorrect: 🇬🇧 <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 Score: <b>{score}/{total}</b>\n\n💡 Remember it for next time!",
+        "training_correct": "✅ <b>Correct!</b> 🎉\n\n{source_flag} <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 Score: <b>{score}/{total}</b>{status_text}",
+        "training_incorrect": "❌ <b>Wrong!</b>\n\nCorrect: {source_flag} <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 Score: <b>{score}/{total}</b>\n\n💡 Remember it for next time!",
         "training_learned": "\n\n🏆 Word marked as <b>learned</b>!",
         "training_progress": "\n\n📈 {left} more correct answer(s) to «learned»",
         "training_finished": "🏁 <b>Training finished!</b>\n\n📊 Result: <b>{score}/{total}</b>\n\n{comment}",
@@ -111,10 +111,13 @@ MESSAGES = {
         "result_good": "👍 Good result! Keep training!",
         "result_try_again": "💪 Don't give up! Practice makes perfect!",
         "result_no_answers": "Try next time! 💪",
-        "settings_title": "⚙️ <b>Settings</b>\n\nTranslation language: <b>{target}</b>\n\nChoose an action:",
-        "settings_change_target": "🔤 Change translation language",
-        "choose_target_lang": "🔤 <b>Choose translation language:</b>\n\nWords will be translated to this language.",
-        "target_lang_changed": "✅ Translation language changed to <b>{lang}</b>.",
+        "settings_title": "⚙️ <b>Settings</b>\n\n🌐 Source language: <b>{source}</b>\n🔤 Native language: <b>{native}</b>\n\nChoose an action:",
+        "settings_change_source": "🌐 Source language",
+        "settings_change_target": "🔤 Native language",
+        "choose_source_lang": "🌐 <b>Choose source language:</b>\n\nThis is the language you want to learn.",
+        "choose_target_lang": "🔤 <b>Choose native language:</b>\n\nTranslations and explanations will use this language.",
+        "source_lang_changed": "✅ Source language changed to <b>{lang}</b>.",
+        "target_lang_changed": "✅ Native language changed to <b>{lang}</b>.",
     },
     # ── Russian ────────────────────────────────────────────────────
     "ru": {
@@ -164,7 +167,7 @@ MESSAGES = {
         "too_many_words": "⚠️ Максимум — <b>{max_words}</b>. Ты отправил <b>{count}</b>.",
         "word_exists": "📌 <b>{word}</b> уже в словаре!\n\n{flag} Перевод: <b>{translation}</b>\n📝 <i>{example}</i>\n\nВведи другое или ❌ Отмена.",
         "translating": "🔄 Перевожу…",
-        "word_added": "✅ <b>Слово добавлено!</b>\n\n🇬🇧 <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Продолжай или начни тренировку!",
+        "word_added": "✅ <b>Слово добавлено!</b>\n\n{source_flag} <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Продолжай или начни тренировку!",
         "cancel_action": "❌ Отменено. Возвращаемся в меню.",
         "progress_bar": "⏳ <b>Обработка…</b>\n\n{bar}  <b>{pct}%</b>\nОбработано: <b>{done}/{total}</b>",
         "batch_added": "✅ <b>Добавлено {count} слов!</b>\n\n",
@@ -191,9 +194,9 @@ MESSAGES = {
         "training_empty": "🎯 <b>Тренировка</b>\n\nНет слов. Добавь через <b>📝 Добавить слова</b>! 🚀",
         "training_pick_mode": "🎯 <b>Тренировка</b>\n\nВыбери режим:",
         "training_translation_ask": (
-            "🎯 <b>Перевод → английский</b>\n\n"
+            "🎯 <b>Перевод → {source_name}</b>\n\n"
             "{flag} Перевод: <b>{translation}</b>\n\n"
-            "✏️ Введи слово на <b>английском</b>:"
+            "✏️ Введи слово на <b>{source_name}</b>:"
         ),
         "training_sentence_ask": (
             "🎯 <b>Предложение с пропуском</b>\n\n"
@@ -201,8 +204,8 @@ MESSAGES = {
             "✏️ Введи пропущенное слово:"
         ),
         "training_question": "🧠 <b>Тренировка</b>\n\n📝 Заполни пропуск:\n<i>{example}</i>\n\n{flag} Подсказка: {translation}\n\n❓ Выбери правильное слово:",
-        "training_correct": "✅ <b>Правильно!</b> 🎉\n\n🇬🇧 <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 Счёт: <b>{score}/{total}</b>{status_text}",
-        "training_incorrect": "❌ <b>Неверно!</b>\n\nПравильно: 🇬🇧 <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 Счёт: <b>{score}/{total}</b>\n\n💡 Запомни!",
+        "training_correct": "✅ <b>Правильно!</b> 🎉\n\n{source_flag} <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 Счёт: <b>{score}/{total}</b>{status_text}",
+        "training_incorrect": "❌ <b>Неверно!</b>\n\nПравильно: {source_flag} <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 Счёт: <b>{score}/{total}</b>\n\n💡 Запомни!",
         "training_learned": "\n\n🏆 Слово <b>выучено</b>!",
         "training_progress": "\n\n📈 Ещё {left} правильных до «выучено»",
         "training_finished": "🏁 <b>Тренировка завершена!</b>\n\n📊 Результат: <b>{score}/{total}</b>\n\n{comment}",
@@ -215,11 +218,14 @@ MESSAGES = {
         "result_good": "👍 Хорошо! Продолжай!",
         "result_try_again": "💪 Не сдавайся!",
         "result_no_answers": "Попробуй ещё! 💪",
-        "settings_title": "⚙️ <b>Настройки</b>\n\nЯзык перевода: <b>{target}</b>\n\nВыберите:",
+        "settings_title": "⚙️ <b>Настройки</b>\n\n🌐 Исходный язык: <b>{source}</b>\n🔤 Родной язык: <b>{native}</b>\n\nВыберите:",
         "settings_change_lang": "🌐 Сменить язык интерфейса",
-        "settings_change_target": "🔤 Сменить язык перевода",
-        "choose_target_lang": "🔤 <b>Выберите язык перевода:</b>\n\nСлова будут переводиться на этот язык.",
-        "target_lang_changed": "✅ Язык перевода изменён на <b>{lang}</b>.",
+        "settings_change_source": "🌐 Исходный язык",
+        "settings_change_target": "🔤 Родной язык",
+        "choose_source_lang": "🌐 <b>Выберите исходный язык:</b>\n\nЭто язык, который вы хотите учить.",
+        "choose_target_lang": "🔤 <b>Выберите родной язык:</b>\n\nПереводы и объяснения будут на этом языке.",
+        "source_lang_changed": "✅ Исходный язык изменён на <b>{lang}</b>.",
+        "target_lang_changed": "✅ Родной язык изменён на <b>{lang}</b>.",
     },
     # ── Uzbek ──────────────────────────────────────────────────────
     "uz": {
@@ -269,7 +275,7 @@ MESSAGES = {
         "too_many_words": "⚠️ Eng ko'pi — <b>{max_words}</b>. Siz <b>{count}</b> ta yubordingiz.",
         "word_exists": "📌 <b>{word}</b> allaqachon bor!\n\n{flag} Tarjima: <b>{translation}</b>\n📝 <i>{example}</i>\n\nBoshqa so'z kiriting yoki ❌ Bekor.",
         "translating": "🔄 Tarjima qilinmoqda…",
-        "word_added": "✅ <b>So'z qo'shildi!</b>\n\n🇬🇧 <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Davom eting yoki mashq boshlang!",
+        "word_added": "✅ <b>So'z qo'shildi!</b>\n\n{source_flag} <b>{word}</b>\n{flag} {translation}\n\n📝 <i>{example}</i>\n\n💡 Davom eting yoki mashq boshlang!",
         "cancel_action": "❌ Bekor qilindi. Menyuga qaytamiz.",
         "progress_bar": "⏳ <b>Qayta ishlanmoqda…</b>\n\n{bar}  <b>{pct}%</b>\n<b>{done}/{total}</b>",
         "batch_added": "✅ <b>{count} ta so'z qo'shildi!</b>\n\n",
@@ -296,9 +302,9 @@ MESSAGES = {
         "training_empty": "🎯 <b>Mashq</b>\n\nSo'zlar yo'q. <b>📝 So'z qo'shish</b>! 🚀",
         "training_pick_mode": "🎯 <b>Mashq</b>\n\nRejimni tanlang:",
         "training_translation_ask": (
-            "🎯 <b>Tarjima → inglizcha</b>\n\n"
+            "🎯 <b>Tarjima → {source_name}</b>\n\n"
             "{flag} Tarjima: <b>{translation}</b>\n\n"
-            "✏️ <b>Inglizcha</b> so'zni yozing:"
+            "✏️ <b>{source_name}</b> so'zni yozing:"
         ),
         "training_sentence_ask": (
             "🎯 <b>Gapni to'ldirish</b>\n\n"
@@ -306,8 +312,8 @@ MESSAGES = {
             "✏️ Yetishmayotgan so'zni yozing:"
         ),
         "training_question": "🧠 <b>Mashq</b>\n\n📝 To'ldiring:\n<i>{example}</i>\n\n{flag} Yordam: {translation}\n\n❓ To'g'ri so'zni tanlang:",
-        "training_correct": "✅ <b>To'g'ri!</b> 🎉\n\n🇬🇧 <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 <b>{score}/{total}</b>{status_text}",
-        "training_incorrect": "❌ <b>Noto'g'ri!</b>\n\nTo'g'ri: 🇬🇧 <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 <b>{score}/{total}</b>\n\n💡 Eslab qoling!",
+        "training_correct": "✅ <b>To'g'ri!</b> 🎉\n\n{source_flag} <b>{word}</b> — {flag} {translation}\n📝 <i>{example}</i>\n\n📊 <b>{score}/{total}</b>{status_text}",
+        "training_incorrect": "❌ <b>Noto'g'ri!</b>\n\nTo'g'ri: {source_flag} <b>{word}</b>\n{flag} {translation}\n📝 <i>{example}</i>\n\n📊 <b>{score}/{total}</b>\n\n💡 Eslab qoling!",
         "training_learned": "\n\n🏆 So'z <b>o'rganilgan</b>!",
         "training_progress": "\n\n📈 Yana {left} ta to'g'ri javob kerak",
         "training_finished": "🏁 <b>Mashq tugadi!</b>\n\n📊 <b>{score}/{total}</b>\n\n{comment}",
@@ -320,20 +326,34 @@ MESSAGES = {
         "result_good": "👍 Yaxshi!",
         "result_try_again": "💪 Davom eting!",
         "result_no_answers": "Keyingi safar! 💪",
-        "settings_title": "⚙️ <b>Sozlamalar</b>\n\nTarjima tili: <b>{target}</b>\n\nTanlang:",
+        "settings_title": "⚙️ <b>Sozlamalar</b>\n\n🌐 Manba tili: <b>{source}</b>\n🔤 Ona tili: <b>{native}</b>\n\nTanlang:",
         "settings_change_lang": "🌐 Interfeys tilini o'zgartirish",
-        "settings_change_target": "🔤 Tarjima tilini o'zgartirish",
-        "choose_target_lang": "🔤 <b>Tarjima tilini tanlang:</b>\n\nSo'zlar ushbu tilga tarjima qilinadi.",
-        "target_lang_changed": "✅ Tarjima tili <b>{lang}</b>ga o'zgartirildi.",
+        "settings_change_source": "🌐 Manba tili",
+        "settings_change_target": "🔤 Ona tili",
+        "choose_source_lang": "🌐 <b>Manba tilini tanlang:</b>\n\nBu siz o'rganmoqchi bo'lgan til.",
+        "choose_target_lang": "🔤 <b>Ona tilingizni tanlang:</b>\n\nTarjima va izohlar shu tilda bo'ladi.",
+        "source_lang_changed": "✅ Manba tili <b>{lang}</b>ga o'zgartirildi.",
+        "target_lang_changed": "✅ Ona tili <b>{lang}</b>ga o'zgartirildi.",
     },
 }
 
-# Flag emoji per target language
-TARGET_LANG_FLAGS = {"ru": "🇷🇺", "uz": "🇺🇿"}
+# Supported learning/translation languages
+LANGUAGE_META = {
+    "en": {"flag": "🇬🇧", "name": "English"},
+    "ru": {"flag": "🇷🇺", "name": "Русский"},
+    "uz": {"flag": "🇺🇿", "name": "O'zbekcha"},
+    "tr": {"flag": "🇹🇷", "name": "Türkçe"},
+    "de": {"flag": "🇩🇪", "name": "Deutsch"},
+    "fr": {"flag": "🇫🇷", "name": "Français"},
+    "kk": {"flag": "🇰🇿", "name": "Қазақша"},
+    "ar": {"flag": "🇦🇪", "name": "العربية"},
+    "ko": {"flag": "🇰🇷", "name": "한국어"},
+    "zh-CN": {"flag": "🇨🇳", "name": "中文"},
+}
 
-# Display names for languages
+# Display names for interface languages
 LANG_DISPLAY = {"en": "English", "ru": "Русский", "uz": "O'zbekcha"}
-TARGET_LANG_DISPLAY = {"ru": "Русский", "uz": "O'zbekcha"}
+TARGET_LANG_DISPLAY = {code: data["name"] for code, data in LANGUAGE_META.items()}
 
 # All known button texts across all locales (for filters)
 def _collect_btn(key: str) -> list[str]:
@@ -362,6 +382,11 @@ def t(locale: str, key: str, **kwargs) -> str:
     return template
 
 
-def get_flag(target_lang: str) -> str:
-    """Return emoji flag for target translation language."""
-    return TARGET_LANG_FLAGS.get(target_lang, "🇷🇺")
+def get_flag(lang_code: str) -> str:
+    """Return emoji flag for selected language."""
+    return LANGUAGE_META.get(lang_code, LANGUAGE_META["en"])["flag"]
+
+
+def get_language_name(lang_code: str) -> str:
+    """Return display name for selected language."""
+    return LANGUAGE_META.get(lang_code, LANGUAGE_META["en"])["name"]

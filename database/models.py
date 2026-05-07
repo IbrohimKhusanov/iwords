@@ -19,7 +19,8 @@ class User(Base):
         id — primary key
         user_id — Telegram user_id (unique)
         interface_lang — UI language ('en', 'ru', 'uz'), default 'en'
-        target_lang — translation target language ('ru', 'uz'), default 'ru'
+        source_lang — language user learns, default 'en'
+        target_lang — translation/native language, default 'ru'
         created_at — registration date
     """
 
@@ -28,7 +29,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True, index=True)
     interface_lang: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
-    target_lang: Mapped[str] = mapped_column(String(5), default="ru", nullable=False)
+    source_lang: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
+    target_lang: Mapped[str] = mapped_column(String(10), default="ru", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
@@ -36,7 +38,8 @@ class User(Base):
     def __repr__(self) -> str:
         return (
             f"<User(id={self.id}, user_id={self.user_id}, "
-            f"interface_lang='{self.interface_lang}', target_lang='{self.target_lang}')>"
+            f"interface_lang='{self.interface_lang}', source_lang='{self.source_lang}', "
+            f"target_lang='{self.target_lang}')>"
         )
 
 

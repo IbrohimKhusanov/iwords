@@ -41,10 +41,21 @@ ADJ_TEMPLATES = [
     "I find this book particularly {word} and insightful.",
 ]
 
-_TARGET_MAP = {"ru": "ru", "uz": "uz"}
+_LANG_MAP = {
+    "en": "en",
+    "ru": "ru",
+    "uz": "uz",
+    "tr": "tr",
+    "de": "de",
+    "fr": "fr",
+    "kk": "kk",
+    "ar": "ar",
+    "ko": "ko",
+    "zh-CN": "zh-CN",
+}
 
 
-def translate_word(word: str, target_lang: str = "ru") -> dict:
+def translate_word(word: str, source_lang: str = "en", target_lang: str = "ru") -> dict:
     """
     Переводит английское слово на целевой язык и генерирует пример.
 
@@ -52,9 +63,10 @@ def translate_word(word: str, target_lang: str = "ru") -> dict:
         dict: word, translation, example, target_lang
     """
     w = word.strip().lower()
-    dest = _TARGET_MAP.get(target_lang, "ru")
+    src = _LANG_MAP.get(source_lang, "en")
+    dest = _LANG_MAP.get(target_lang, "ru")
     try:
-        translator = GoogleTranslator(source="en", target=dest)
+        translator = GoogleTranslator(source=src, target=dest)
         translation = translator.translate(w) or ""
         if not translation.strip():
             raise ValueError("empty translation")
@@ -70,6 +82,7 @@ def translate_word(word: str, target_lang: str = "ru") -> dict:
         "word": w,
         "translation": translation,
         "example": example,
+        "source_lang": source_lang,
         "target_lang": target_lang,
     }
 

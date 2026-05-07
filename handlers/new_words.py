@@ -28,6 +28,7 @@ async def show_learn_new(message: Message, session: AsyncSession, locale: str):
     db_user = await session.scalar(
         select(User).where(User.user_id == user_id)
     )
+    source_flag = get_flag(db_user.source_lang if db_user else "en")
     flag = get_flag(db_user.target_lang if db_user else "ru")
 
     # Select last 5 new words (interval = 0)
@@ -50,7 +51,7 @@ async def show_learn_new(message: Message, session: AsyncSession, locale: str):
     words_list = ""
     for i, w in enumerate(words, 1):
         words_list += (
-            f"<b>{i}.</b> 🇬🇧 <b>{w.english_word}</b> — {flag} {w.translation}\n"
+            f"<b>{i}.</b> {source_flag} <b>{w.english_word}</b> — {flag} {w.translation}\n"
             f"    📝 <i>{w.example}</i>\n\n"
         )
 
