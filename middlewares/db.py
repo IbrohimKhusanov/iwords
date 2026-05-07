@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from database.engine import async_session_maker
 from database.models import User
+from i18n import t, resolve_ui_locale
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -34,10 +35,11 @@ class DbSessionMiddleware(BaseMiddleware):
                 db_user = await session.scalar(
                     select(User).where(User.user_id == user.id)
                 )
-                data["locale"] = db_user.interface_lang if db_user else "en"
+                data["locale"] = resolve_ui_locale(db_user.target_lang if db_user else "en")
                 data["user_db"] = db_user
             else:
                 data["locale"] = "en"
                 data["user_db"] = None
+            data["_"] = lambda key, **kwargs: t(data["locale"], key, **kwargs)
 
             return await handler(event, data)

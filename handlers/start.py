@@ -15,6 +15,7 @@ from i18n import (
     t,
     get_flag,
     get_language_name,
+    resolve_ui_locale,
     BTN_SETTINGS,
     BTN_MY_WORDS,
     BTN_RESULTS,
@@ -41,7 +42,7 @@ async def cmd_start(message: Message, session: AsyncSession, locale: str):
     db_user = await session.scalar(select(User).where(User.user_id == user_id))
 
     if db_user:
-        loc = db_user.interface_lang
+        loc = resolve_ui_locale(db_user.target_lang)
     else:
         db_user = User(user_id=user_id, interface_lang="en", source_lang="en", target_lang="ru")
         session.add(db_user)
@@ -143,8 +144,9 @@ async def set_target_lang(callback: CallbackQuery, session: AsyncSession, locale
         db_user.target_lang = chosen_target
         await session.commit()
 
+    ui_locale = resolve_ui_locale(chosen_target)
     await callback.message.edit_text(
-        t(locale, "target_lang_changed", lang=get_language_name(chosen_target)),
+        t(ui_locale, "target_lang_changed", lang=get_language_name(chosen_target)),
         parse_mode="HTML",
     )
     await callback.answer()

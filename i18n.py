@@ -368,6 +368,14 @@ BTN_MY_WORDS = list({*BTN_VOCABULARY, *_collect_btn("btn_my_words")})
 BTN_SETTINGS = _collect_btn("btn_settings")
 
 DEFAULT_LOCALE = "en"
+SUPPORTED_UI_LOCALES = {"en", "ru", "uz"}
+
+
+def resolve_ui_locale(target_lang: str | None) -> str:
+    """Map user's native language to UI locale, fallback to English."""
+    if not target_lang:
+        return DEFAULT_LOCALE
+    return target_lang if target_lang in SUPPORTED_UI_LOCALES else DEFAULT_LOCALE
 
 
 def t(locale: str, key: str, **kwargs) -> str:

@@ -5,6 +5,7 @@ Batch lists run in a background task; reports are sent in chunks of 10–15 word
 
 import re
 import asyncio
+import html
 
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery
@@ -19,6 +20,7 @@ from states.add_word import AddWordState
 from keyboards.main import main_menu_kb
 from keyboards.inline import cancel_kb
 from services.translator import translate_word
+from services.ai_generator import generate_example
 from i18n import t, get_flag, BTN_ADD_WORDS
 
 router = Router()
@@ -136,13 +138,17 @@ async def _single(
 
     wait_msg = await message.answer(t(locale, "translating"))
     result = translate_word(word_in, source_lang=src, target_lang=tgt)
+    ai_example = await generate_example(result["word"], src, tgt)
+    source_example = ai_example["example_source"]
+    translated_example = ai_example["example_translation"]
+    rendered_example = html.escape(f"{source_example}\n{translated_example}")
 
     session.add(
         Word(
             user_id=uid,
             english_word=result["word"],
             translation=result["translation"],
-            example=result["example"],
+            example=source_example,
             status="new",
             correct_answers_count=0,
             interval=0,
@@ -160,7 +166,7 @@ async def _single(
             word=result["word"],
             flag=flag,
             translation=result["translation"],
-            example=result["example"],
+            example=rendered_example,
         ),
         reply_markup=main_menu_kb(locale),
         parse_mode="HTML",
@@ -192,17 +198,22 @@ async def _batch_background(bot: Bot, chat_id: int, user_id: int, words: list[st
                 continue
 
             r = translate_word(w, source_lang=src, target_lang=tgt)
+            ai_example = await generate_example(r["word"], src, tgt)
+            source_example = ai_example["example_source"]
+            translated_example = ai_example["example_translation"]
             session.add(
                 Word(
                     user_id=user_id,
                     english_word=r["word"],
                     translation=r["translation"],
-                    example=r["example"],
+                    example=source_example,
                     status="new",
                     correct_answers_count=0,
                     interval=0,
                 )
             )
+            r["example"] = html.escape(source_example)
+            r["example_translation"] = html.escape(translated_example)
             added.append(r)
             uncommitted += 1
 
@@ -275,7 +286,8 @@ async def _send_batch_reports(
         for j, r in enumerate(chunk, off + 1):
             parts.append(
                 f"  {j}. {source_flag} <b>{r['word']}</b> — {flag} {r['translation']}\n"
-                f"      📝 <i>{r['example']}</i>"
+                f"      📝 <i>{r['example']}</i>\n"
+                f"      {flag} <i>{r.get('example_translation', '')}</i>"
             )
         is_last = ci == len(chunks) - 1
         if is_last:
