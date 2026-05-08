@@ -71,5 +71,4 @@ python bot.py
 
 The database (`words.db`) is created automatically on first launch.
 
----
 
