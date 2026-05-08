@@ -73,4 +73,3 @@ The database (`words.db`) is created automatically on first launch.
 
 ---
 
-## 📁 Project Structure
